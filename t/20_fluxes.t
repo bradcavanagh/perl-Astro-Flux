@@ -3,7 +3,7 @@
 use lib qw[ /home/bradc/development/perlmods ];
 
 use strict;
-use Test::More tests => 8;
+use Test::More tests => 10;
 
 require_ok('Astro::WaveBand');
 require_ok('Astro::Flux');
@@ -27,4 +27,8 @@ is( $fluxes->flux( waveband => new Astro::WaveBand( Filter => 'J' ) )->quantity(
 is( $fluxes->flux( waveband => new Astro::WaveBand( Filter => 'H' ) ), undef, 'flux is undef when asking for a derived magnitude' );
 
 is( $fluxes->flux( waveband => new Astro::WaveBand( Filter => 'H') , derived => 1 )->quantity('mag'), 4, 'Explicit retrieval of derived magnitude');
+
+is( $fluxes->color( lower => new Astro::WaveBand( Filter => 'J' ), upper => new Astro::WaveBand( Filter => 'K' ) )->quantity, 10, 'Retrieval of stored color');
+
+is( $fluxes->color( lower => new Astro::WaveBand( Filter => 'J' ), upper => new Astro::WaveBand( Filter => 'H' ) )->quantity, -3, 'Retrieval of derived color');
 
