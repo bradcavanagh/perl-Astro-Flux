@@ -52,6 +52,16 @@ the constructor will throw an error.
 
 The type is case-insensitive for lookups using the C<quantity> method.
 
+A fourth optional argument may be passed; this is a hash containing
+the following optional keys:
+
+  quality - an C<Astro::Quality> object denoting quality flags for the
+    C<Astro::Flux> object.
+  reference_waveband - an C<Astro::WaveBand> object denoting a reference
+    waveband for the C<Astro::Flux> object. This is used for determining
+    magnitudes when deriving them from C<Astro::FluxColor> objects. See
+    C<Astro::Fluxes>.
+
 =cut
 
 sub new {
@@ -61,6 +71,8 @@ sub new {
   my $quantity = shift;
   my $type = shift;
   my $waveband = shift;
+
+  my %args = @_;
 
   croak "Quantity must be defined"
     unless defined $quantity;
@@ -75,6 +87,15 @@ sub new {
 
   $flux->{QUANTITY} = { uc($type) => $quantity };
   $flux->{WAVEBAND} = $waveband;
+
+  if( defined( $args{'quality'} ) &&
+      UNIVERSAL::isa( $args{'quality'}, "Astro::Quality" ) ) {
+    $flux->{QUALITY} = $args{'quality'};
+  }
+  if( defined( $args{'reference_waveband'} ) &&
+      UNIVERSAL::isa( $args{'reference_waveband'}, "Astro::WaveBand" ) ) {
+    $flux->{REFERENCE_WAVEBAND} = $args{'reference_waveband'};
+  }
 
   bless( $flux, $class );
   return $flux;
@@ -128,6 +149,38 @@ sub waveband {
   my $self = shift;
 
   return $self->{WAVEBAND};
+}
+
+=item B<quality>
+
+Returns the quality for the given flux object.
+
+  my $quality = $flux->quality;
+
+Returns an C<Astro::Quality> object if defined. If not, returns undef.
+
+=cut
+
+sub quality {
+  my $self = shift;
+
+  return $self->{QUALITY};
+}
+
+=item B<reference_waveband>
+
+Returns the reference waveband for the given flux object.
+
+  my $ref_waveband = $flux->reference_waveband;
+
+Returns an C<Astro::WaveBand> object if defined. If not, returns undef.
+
+=cut
+
+sub reference_waveband {
+  my $self = shift;
+
+  return $self->{REFERENCE_WAVEBAND};
 }
 
 =back
