@@ -50,6 +50,8 @@ If any of the parameters are undefined, the constructor will throw
 an error. If the waveband parameter is not an C<Astro::WaveBand> object,
 the constructor will throw an error.
 
+The type is case-insensitive for lookups using the C<quantity> method.
+
 =cut
 
 sub new {
@@ -71,7 +73,7 @@ sub new {
 
   my $flux = {};
 
-  $flux->{QUANTITY} = { $type => $quantity };
+  $flux->{QUANTITY} = { uc($type) => $quantity };
   $flux->{WAVEBAND} = $waveband;
 
   bless( $flux, $class );
@@ -96,6 +98,8 @@ constructor is all you can get out, so if you specify the type
 to be 'magnitude' and you ask for a 'mag', this method will
 throw an error.
 
+The type is case-insensitive.
+
 =cut
 
 sub quantity {
@@ -105,7 +109,7 @@ sub quantity {
   return undef if ! defined $type;
 
   croak "Cannot translate between flux types"
-    if ! defined( $self->{QUANTITY}->{$type} );
+    if ! defined( $self->{QUANTITY}->{uc($type)} );
 
   return $self->{QUANTITY}->{$type};
 }
