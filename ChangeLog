@@ -1,3 +1,16 @@
+2004-12-16  Brad Cavanagh  <b.cavanagh@jach.hawaii.edu>
+
+	* FluxColor.pm: New class to handle astronomical colours.
+
+	* Fluxes.pm: New class to handle collections of Astro::Flux and
+	  Astro::FluxColor objects.
+
+	* Flux.pm: Add quality, reference waveband accessors.
+
+2004-12-07  Brad Cavanagh  <b.cavanagh@jach.hawaii.edu>
+
+	* Flux.pm (Repository): Added 'measured' accessor.
+
 2004-11-23  Brad Cavanagh  <b.cavanagh@jach.hawaii.edu>
 
 	* Flux.pm (Repository): initial addition
