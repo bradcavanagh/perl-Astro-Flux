@@ -104,12 +104,12 @@ The type is case-insensitive.
 
 sub quantity {
   my $self = shift;
-  my $type = shift;
+  my $type = uc(shift);
 
   return undef if ! defined $type;
 
   croak "Cannot translate between flux types"
-    if ! defined( $self->{QUANTITY}->{uc($type)} );
+    if ! defined( $self->{QUANTITY}->{$type} );
 
   return $self->{QUANTITY}->{$type};
 }
