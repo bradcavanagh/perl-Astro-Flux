@@ -177,6 +177,81 @@ sub flux {
   }
 }
 
+=item B<color>
+
+Returns the color for two requested wavebands.
+
+my $color = $fluxes->color( upper => new Astro::WaveBand( Filter => 'H' ),
+                            lower => new Astro::WaveBand( Filter => 'J' ) );
+
+Arguments are passed as key-value pairs. The two mandatory named arguments are
+'upper' and 'lower', denoting the upper (longer wavelength) and lower (shorter
+wavelength) wavebands for the color. The value for either can be either an
+C<Astro::WaveBand> object or a string that can be used to create a new
+C<Astro::WaveBand> object via its Filter parameter.
+
+The above example will return the H-K color.
+
+=cut
+
+sub color {
+  my $self = shift;
+  my %args = @_;
+
+  my $result;
+
+  if( ! defined( $args{'upper'} ) ) {
+    croak "upper waveband argument must be passed to &Astro::Fluxes::color";
+  }
+  if( ! defined( $args{'lower'} ) ) {
+    croak "lower waveband argument must be passed to &Astro::Fluxes::color";
+  }
+
+  my $upper = $args{'upper'};
+  my $lower = $args{'lower'};
+
+  # Upgrade the wavebands to proper Astro::WaveBand objects if necessary.
+  if( ! UNIVERSAL::isa( $upper, "Astro::WaveBand" ) ) {
+    $upper = new Astro::WaveBand( Filter => $upper );
+  }
+  if( ! UNIVERSAL::isa( $lower, "Astro::WaveBand" ) ) {
+    $lower = new Astro::WaveBand( Filter => $lower );
+  }
+
+  # First, find out if we have an easy job. Check if the lower refers to
+  # the upper, from which we can get the colour directly.
+  my $upper_key = substr( $upper->natural, 0, 1 );
+  my $lower_key = substr( $lower->natural, 0, 1 );
+  use Data::Dumper;
+  foreach my $flux ( @{$self->{$lower_key}} ) {
+    if( defined( $flux->reference_waveband ) ) {
+      my $ref_key = substr( $flux->reference_waveband->natural, 0, 1 );
+      if( $ref_key eq $upper_key ) {
+        return new Astro::FluxColor( lower => $lower,
+                                     upper => $upper,
+                                     quantity => $flux->quantity('mag') );
+      }
+    }
+  }
+
+  # So we're here. Maybe we can get magnitudes for the upper and lower wavebands.
+  my $upper_mag = $self->flux( waveband => $upper, derived => 1 );
+  my $lower_mag = $self->flux( waveband => $lower, derived => 1 );
+  if( defined( $upper_mag ) && defined( $lower_mag ) ) {
+    return new Astro::FluxColor( lower => $lower,
+                                 upper => $upper,
+                                 quantity => $lower_mag->quantity('mag') - $upper_mag->quantity('mag') );
+  }
+
+  # At this point I don't really know how to get a colour. If we're here
+  # that means we have some kind of colour-colour relation that we might
+  # be able to get the desired colour from...
+
+  # Return undef in the meantime.
+  return undef;
+
+}
+
 =back
 
 =head1 REVISION
