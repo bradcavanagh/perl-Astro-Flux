@@ -1,0 +1,5 @@
+MANIFEST
+README
+Flux.pm
+ChangeLog
+t/00_basic.t
