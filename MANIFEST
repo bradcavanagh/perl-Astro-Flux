@@ -1,5 +1,8 @@
 MANIFEST
 README
 Flux.pm
+Fluxes.pm
+FluxColor.pm
 ChangeLog
 t/00_basic.t
+t/20_fluxes.t
