@@ -5,4 +5,5 @@ Fluxes.pm
 FluxColor.pm
 ChangeLog
 t/00_basic.t
+t/10_fluxcolor.t
 t/20_fluxes.t
