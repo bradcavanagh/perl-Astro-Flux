@@ -32,3 +32,6 @@ is( $fluxes->color( lower => new Astro::WaveBand( Filter => 'J' ), upper => new 
 
 is( $fluxes->color( lower => new Astro::WaveBand( Filter => 'J' ), upper => new Astro::WaveBand( Filter => 'H' ) )->quantity, -3, 'Retrieval of derived color');
 
+my $flux3 = new Astro::Flux( 3, 'mag', new Astro::WaveBand( Filter => 'R' ) );
+$fluxes->pushfluxes( $flux3 );
+is( $fluxes->flux( waveband => new Astro::WaveBand( Filter => 'R' ) )->quantity('mag'), 3, 'Retrieval of pushed magnitude');

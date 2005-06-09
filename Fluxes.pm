@@ -252,6 +252,51 @@ sub color {
 
 }
 
+
+=item B<pushfluxes>
+
+Push C<Astro::Flux> and C<Astro::FluxColor> object into the C<Astro::Fluxes>
+object,
+
+  $fluxes->pushfluxes( $flux1, $flux2, $color1 );
+
+Any number of C<Astro::Flux> or C<Astro::FluxColor> objects can
+be passed as arguments.
+
+=cut
+
+sub pushfluxes {
+  my $self = shift;
+  my %args = @_;
+
+  foreach my $arg ( @_ ) {
+    if( UNIVERSAL::isa( $arg, "Astro::Flux" ) ) {
+      my $key = substr( $arg->waveband->natural, 0, 1 );
+      push @{$self}, $arg;
+    } elsif( UNIVERSAL::isa( $arg, "Astro::FluxColor" ) ) {
+
+      # Create an Astro::Quality object saying that these are derived
+      # magnitudes.
+      my $quality = new Astro::Quality( 'derived' => 1 );
+
+      # Create two flux objects, one for the lower and one for the upper.
+      my $lower_flux = new Astro::Flux( $arg->quantity , 'mag', $arg->lower,
+                                        quality => $quality,
+                                        reference_waveband => $arg->upper );
+      my $upper_flux = new Astro::Flux( -1.0 * $arg->quantity, 'mag', $arg->upper,
+                                        quality => $quality,
+                                        reference_waveband => $arg->lower );
+
+      push @{$self->{substr( $lower_flux->waveband->natural, 0, 1 )}}, $lower_flux;
+      push @{$self->{substr( $upper_flux->waveband->natural, 0, 1 )}}, $upper_flux;
+
+    }
+  }
+
+  return $self->$fluxes;
+
+}
+
 =back
 
 =head1 REVISION
