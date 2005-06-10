@@ -267,12 +267,11 @@ be passed as arguments.
 
 sub pushfluxes {
   my $self = shift;
-  my %args = @_;
 
   foreach my $arg ( @_ ) {
     if( UNIVERSAL::isa( $arg, "Astro::Flux" ) ) {
       my $key = substr( $arg->waveband->natural, 0, 1 );
-      push @{$self}, $arg;
+     push @{$self->{$key}}, $arg;
     } elsif( UNIVERSAL::isa( $arg, "Astro::FluxColor" ) ) {
 
       # Create an Misc::Quality object saying that these are derived
@@ -293,7 +292,7 @@ sub pushfluxes {
     }
   }
 
-  return $self->$fluxes;
+  return $self;
 
 }
 

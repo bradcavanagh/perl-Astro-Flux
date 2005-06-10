@@ -3,7 +3,7 @@
 use lib qw[ /home/bradc/development/perlmods ];
 
 use strict;
-use Test::More tests => 10;
+use Test::More tests => 11;
 
 require_ok('Astro::WaveBand');
 require_ok('Astro::Flux');
