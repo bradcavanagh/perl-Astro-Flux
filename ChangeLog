@@ -1,3 +1,10 @@
+2005-06-10  Brad Cavanagh  <b.cavanagh@jach.hawaii.edu>
+        
+	* Fluxes.pm & Flux.pm: Replaced Astro::Quality with Misc::Quality
+	
+	* Fluxes.pm: Added a pushfluxes() method to allow us to add fluxes
+	  after creation time.
+
 2004-12-16  Brad Cavanagh  <b.cavanagh@jach.hawaii.edu>
 
 	* FluxColor.pm: New class to handle astronomical colours.

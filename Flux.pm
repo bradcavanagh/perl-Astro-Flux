@@ -55,7 +55,7 @@ The type is case-insensitive for lookups using the C<quantity> method.
 A fourth optional argument may be passed; this is a hash containing
 the following optional keys:
 
-  quality - an C<Astro::Quality> object denoting quality flags for the
+  quality - an C<Misc::Quality> object denoting quality flags for the
     C<Astro::Flux> object.
   reference_waveband - an C<Astro::WaveBand> object denoting a reference
     waveband for the C<Astro::Flux> object. This is used for determining
@@ -89,7 +89,7 @@ sub new {
   $flux->{WAVEBAND} = $waveband;
 
   if( defined( $args{'quality'} ) &&
-      UNIVERSAL::isa( $args{'quality'}, "Astro::Quality" ) ) {
+      UNIVERSAL::isa( $args{'quality'}, "Misc::Quality" ) ) {
     $flux->{QUALITY} = $args{'quality'};
   }
   if( defined( $args{'reference_waveband'} ) &&
@@ -157,7 +157,7 @@ Returns the quality for the given flux object.
 
   my $quality = $flux->quality;
 
-Returns an C<Astro::Quality> object if defined. If not, returns undef.
+Returns an C<Misc::Quality> object if defined. If not, returns undef.
 
 =cut
 

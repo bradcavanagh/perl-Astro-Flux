@@ -26,7 +26,7 @@ use warnings::register;
 use Carp;
 
 use Astro::Flux;
-use Astro::Quality;
+use Misc::Quality;
 
 our $VERSION = '0.01';
 
@@ -61,9 +61,9 @@ sub new {
       push @{$fluxes->{$key}}, $arg;
     } elsif( UNIVERSAL::isa( $arg, "Astro::FluxColor" ) ) {
 
-      # Create an Astro::Quality object saying that these are derived
+      # Create an Misc::Quality object saying that these are derived
       # magnitudes.
-      my $quality = new Astro::Quality( 'derived' => 1 );
+      my $quality = new Misc::Quality( 'derived' => 1 );
 
       # Create two flux objects, one for the lower and one for the upper.
       my $lower_flux = new Astro::Flux( $arg->quantity , 'mag', $arg->lower,
@@ -173,7 +173,7 @@ sub flux {
   if( ! defined( $running_total ) ) {
     return undef;
   } else {
-    return new Astro::Flux( $running_total, 'mag', $waveband, quality => new Astro::Quality( derived => 1 ) );
+    return new Astro::Flux( $running_total, 'mag', $waveband, quality => new Misc::Quality( derived => 1 ) );
   }
 }
 
@@ -275,9 +275,9 @@ sub pushfluxes {
       push @{$self}, $arg;
     } elsif( UNIVERSAL::isa( $arg, "Astro::FluxColor" ) ) {
 
-      # Create an Astro::Quality object saying that these are derived
+      # Create an Misc::Quality object saying that these are derived
       # magnitudes.
-      my $quality = new Astro::Quality( 'derived' => 1 );
+      my $quality = new Misc::Quality( 'derived' => 1 );
 
       # Create two flux objects, one for the lower and one for the upper.
       my $lower_flux = new Astro::Flux( $arg->quantity , 'mag', $arg->lower,
