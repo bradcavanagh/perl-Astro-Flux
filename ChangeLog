@@ -1,3 +1,7 @@
+2005-06-14 Alasdair Allan <aa@astro.ex.ac.uk>
+
+        * Fluxes.pm: Added whatwavebands().
+	
 2005-06-13 Alasdair Allan <aa@astro.ex.ac.uk>
 
         * Fluxes.pm: Added allfluxes() and fluxesbywaveband() methods.

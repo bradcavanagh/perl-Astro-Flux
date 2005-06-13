@@ -1,7 +1,7 @@
 #!perl
 
 use strict;
-use Test::More tests => 12;
+use Test::More tests => 13;
 use Data::Dumper;
 
 require_ok('Astro::WaveBand');
@@ -35,5 +35,11 @@ is( $fluxes->color( lower => new Astro::WaveBand( Filter => 'J' ), upper => new 
 my %all = $fluxes->allfluxes();
 is( scalar( %all ), '3/8', 'all Astro::Flux objects');
 
+my @wavebands = ( "J", "H", "K" );
+is( sort ( $fluxes->whatwavebands() ), sort ( @wavebands ), 'whatwavebands()' );
+
 my @jband = $fluxes->fluxesbywaveband( waveband => 'J' );
 is( scalar( @jband ), 2, 'number of J band Astro::Flux objects' );
+
+
+

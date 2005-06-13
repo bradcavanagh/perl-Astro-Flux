@@ -345,6 +345,28 @@ sub fluxesbywaveband {
   return @{$self->{$key}};
 }
 
+
+=item B<whatwavebands>
+
+Returns an array of the wavebands contained in the object
+
+  @wavebands = $fluxes->whatwavebands( );
+
+=cut
+
+sub whatwavebands {
+  my $self = shift;
+  my %args = @_;
+
+  my $result;
+
+  my @wavebands;
+  foreach my $key ( sort keys %{$self} ) {
+     push @wavebands, $key;
+  }   
+  return @wavebands;
+}
+
 =back
 
 =head1 REVISION
