@@ -126,7 +126,7 @@ sub flux {
   my $derived = defined( $args{'derived'} ) ? $args{'derived'} : 0;
 
   if( ! UNIVERSAL::isa( $waveband, "Astro::WaveBand" ) ) {
-# Upgrade to a proper Astro::WaveBand object.
+    # Upgrade to a proper Astro::WaveBand object.
     $waveband = new Astro::WaveBand( Filter => $waveband );
   }
 
@@ -173,7 +173,8 @@ sub flux {
   if( ! defined( $running_total ) ) {
     return undef;
   } else {
-    return new Astro::Flux( $running_total, 'mag', $waveband, quality => new Misc::Quality( derived => 1 ) );
+    return new Astro::Flux( $running_total, 'mag', $waveband, 
+                            quality => new Misc::Quality( derived => 1 ) );
   }
 }
 
@@ -296,6 +297,54 @@ sub pushfluxes {
 
 }
 
+=item B<allfluxes>
+
+Returns an hash of all the C<Astro::Flux> objects contained in the
+C<Astro::Fluxes> object,
+
+  %fluxes = $fluxes->allfluxes();
+
+=cut
+
+sub allfluxes {
+  my $self = shift;
+   
+  return %{$self};
+
+}
+
+=item B<fluxesbywaveband>
+
+Returns an hash of all the C<Astro::Flux> objects contained in the
+C<Astro::Fluxes> object,
+
+  @fluxes = $fluxes->fluxesbywaveband(  waveband => 'J' );
+
+=cut
+
+sub fluxesbywaveband {
+  my $self = shift;
+  my %args = @_;
+
+  my $result;
+
+  if( ! defined( $args{'waveband'} ) ) {
+    croak "waveband argument must be passed to &Astro::Fluxes::flux";
+  }
+
+  my $waveband = $args{'waveband'};
+  my $derived = defined( $args{'derived'} ) ? $args{'derived'} : 0;
+
+  if( ! UNIVERSAL::isa( $waveband, "Astro::WaveBand" ) ) {
+    # Upgrade to a proper Astro::WaveBand object.
+    $waveband = new Astro::WaveBand( Filter => $waveband );
+  }
+
+  # The key is the first character in the waveband.
+  my $key = substr( $waveband->natural, 0, 1 );
+  return @{$self->{$key}};
+}
+
 =back
 
 =head1 REVISION
@@ -304,11 +353,12 @@ sub pushfluxes {
 
 =head1 AUTHORS
 
-Brad Cavanagh E<lt>b.cavanagh@jach.hawaii.eduE<gt>
+Brad Cavanagh E<lt>b.cavanagh@jach.hawaii.eduE<gt>,
+Alasdair Allan E<lt>aa@astro.ex.ac.ukE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004 Particle Physics and Astronomy Research
+Copyright (C) 2004 - 2005 Particle Physics and Astronomy Research
 Council.  All Rights Reserved.
 
 This program is free software; you can redistribute it and/or

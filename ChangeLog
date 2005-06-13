@@ -1,4 +1,15 @@
-2005-06-10  Brad Cavanagh  <b.cavanagh@jach.hawaii.edu>
+2005-06-13 Alasdair Allan <aa@astro.ex.ac.uk>
+
+        * Fluxes.pm: Added allfluxes() and fluxesbywaveband() methods.
+	
+	* Flux.pm: Moved $quanitity to be a Number::Uncertainty object,
+	  added support to date stamp the flux using a DateTime object,
+	  and support to retreieve the error independantly. All changes
+	  should be backwards compatible. 
+	  
+	* Added some more tests  
+
+2005-06-10  Alasdair Allan <aa@astro.ex.ac.uk>
         
 	* Fluxes.pm & Flux.pm: Replaced Astro::Quality with Misc::Quality
 	

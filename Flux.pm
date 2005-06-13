@@ -26,6 +26,8 @@ use warnings;
 use warnings::register;
 use Carp;
 
+use Number::Uncertainty;
+
 our $VERSION = '0.01';
 
 =head1 METHODS
@@ -42,7 +44,8 @@ Create a new instance of an C<Astro::Flux> object.
 
 All three parameters must be defined. They are:
 
-  quantity - numerical value for the flux
+  quantity - numerical value for the flux, my be a primitive, or a
+             C<Number::Uncertainty> object.
   type - type of flux. Can be any string.
   waveband - waveband for the given flux. Must be an C<Astro::WaveBand> object.
 
@@ -61,6 +64,8 @@ the following optional keys:
     waveband for the C<Astro::Flux> object. This is used for determining
     magnitudes when deriving them from C<Astro::FluxColor> objects. See
     C<Astro::Fluxes>.
+  time - an C<DateTime> object which is the time of observation for the
+  measurement in the C<Astro::Flux> object.  
 
 =cut
 
@@ -76,7 +81,11 @@ sub new {
 
   croak "Quantity must be defined"
     unless defined $quantity;
-
+    
+  unless ( UNIVERSAL::isa($quantity, "Number::Uncertainy" ) ) {
+     $quantity = new Number::Uncertainty( Value => $quantity );    
+  }
+  
   croak "Type must be defined"
     unless defined $type;
 
@@ -95,6 +104,11 @@ sub new {
   if( defined( $args{'reference_waveband'} ) &&
       UNIVERSAL::isa( $args{'reference_waveband'}, "Astro::WaveBand" ) ) {
     $flux->{REFERENCE_WAVEBAND} = $args{'reference_waveband'};
+  }
+  
+  if( defined( $args{'time'} ) &&
+      UNIVERSAL::isa( $args{'time'}, "DateTime" ) ) {
+    $flux->{TIME} = $args{'time'};
   }
 
   bless( $flux, $class );
@@ -132,8 +146,43 @@ sub quantity {
   croak "Cannot translate between flux types"
     if ! defined( $self->{QUANTITY}->{$type} );
 
-  return $self->{QUANTITY}->{$type};
+  my $number = $self->{QUANTITY}->{$type};
+  my $value = $number->value();
+  return $value;
 }
+
+
+=item B<error>
+
+Returns the error in the quantity for a requested flux type.
+
+  my $mag = $flux->quantity('mag');
+
+No conversions are done between types. What you put in via the
+constructor is all you can get out, so if you specify the type
+to be 'magnitude' and you ask for a 'mag', this method will
+throw an error.
+
+The type is case-insensitive.
+
+Errors are only returned if one was created with the object.
+
+=cut
+
+sub error {
+  my $self = shift;
+  my $type = uc(shift);
+
+  return undef if ! defined $type;
+
+  croak "Cannot translate between flux types"
+    if ! defined( $self->{QUANTITY}->{$type} );
+
+  my $number = $self->{QUANTITY}->{$type};
+  my $error = $number->error();
+  return $error;
+}
+
 
 =item B<waveband>
 
@@ -183,6 +232,23 @@ sub reference_waveband {
   return $self->{REFERENCE_WAVEBAND};
 }
 
+
+=item B<time>
+
+Returns the time stamp for the given flux object.
+
+  my $time = $flux->time;
+
+Returns an C<Date::time> object if defined. If not, returns undef.
+
+=cut
+
+sub time {
+  my $self = shift;
+
+  return $self->{TIME};
+}
+
 =back
 
 =head1 REVISION
@@ -191,11 +257,12 @@ sub reference_waveband {
 
 =head1 AUTHORS
 
-Brad Cavanagh E<lt>b.cavanagh@jach.hawaii.eduE<gt>
+Brad Cavanagh E<lt>b.cavanagh@jach.hawaii.eduE<gt>,
+Alasdair Allan E<lt>aa@astro.ex.ac.ukE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2004 Particle Physics and Astronomy Research
+Copyright (C) 2004 - 2005 Particle Physics and Astronomy Research
 Council.  All Rights Reserved.
 
 This program is free software; you can redistribute it and/or
