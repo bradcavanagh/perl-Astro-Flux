@@ -151,11 +151,13 @@ sub flux {
   # one.
   my $ref_flux;
   my $running_total = undef;
+  my $running_error = undef;
   foreach my $flux ( @{$self->{$key}} ) {
     if( defined( $flux->reference_waveband ) &&
         ( scalar( @{$self->{substr( $flux->reference_waveband->natural, 0, 1 )}} > 1 ) ||
           ${$self->{substr( $flux->reference_waveband->natural, 0, 1 ) }}[0]->reference_waveband != $waveband ) ) {
       $running_total += $flux->quantity('mag');
+      $running_error += $flux->error('mag')*$flux->error('mag');
       $ref_flux = ${$self->{substr( $flux->reference_waveband->natural, 0, 1 ) }}[0];
       last;
     }
@@ -165,17 +167,32 @@ sub flux {
   # it to the running total.
   if( defined( $ref_flux ) ) {
     my $mag = $self->flux( waveband => $ref_flux->waveband, derived => 1 )->quantity('mag');
+    my $err = $self->flux( waveband => $ref_flux->waveband, derived => 1 )->error('mag');
     $running_total += $mag;
+    $running_error += $err if defined $err;
   }
 
+  $running_error = sqrt( $running_error );
+  
   # Form a flux object with the running total and the input waveband,
   # and return that.
   if( ! defined( $running_total ) ) {
     return undef;
   } else {
-    return new Astro::Flux( $running_total, 'mag', $waveband, 
+    my $number;
+    if ( defined $running_error ) {
+       $number = new Number::Uncertainty( Value => $running_total,
+                                          Error => $running_error );
+    } else {
+       $number = $running_total;
+    }
+       					  
+    my $returned_flux = new Astro::Flux( $number, 'mag', $waveband, 
                             quality => new Misc::Quality( derived => 1 ) );
+			    
+    return $returned_flux;			    
   }
+  
 }
 
 =item B<color>

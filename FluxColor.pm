@@ -27,6 +27,7 @@ use warnings::register;
 use Carp;
 
 use Astro::WaveBand;
+use Number::Uncertainty;
 
 our $VERSION = '0.01';
 
@@ -69,15 +70,19 @@ sub new {
     croak "Upper waveband must be an Astro::WaveBand object";
   }
 
+  my $quantity;
   if( ! defined( $args{'quantity'} ) ) {
     croak "Color quantity must be defined";
+  } elsif ( ! UNIVERSAL::isa($args{'quantity'}, "Number::Uncertainy" ) ) {
+     $quantity = new Number::Uncertainty( Value => $args{'quantity'} );    
+  } else {
+     $quantity = $args{'quantity'};
   }
-
   my $color = {};
 
   $color->{LOWER} = $args{'lower'};
   $color->{UPPER} = $args{'upper'};
-  $color->{QUANTITY} = $args{'quantity'};
+  $color->{QUANTITY} = $quantity;
 
   bless( $color, $class );
   return $color;
@@ -102,7 +107,28 @@ There are no parameters.
 
 sub quantity {
   my $self = shift;
-  return $self->{QUANTITY};
+
+  my $number = $self->{QUANTITY};
+  my $value = $number->value();
+  return $value;
+}
+
+=item B<error>
+
+Returns the actual uncertainty in the cerror.
+
+  my $e = $color->error;
+
+There are no parameters.
+
+=cut
+
+sub error {
+  my $self = shift;
+
+  my $number = $self->{QUANTITY};
+  my $error = $number->error();
+  return $error;
 }
 
 =item B<lower>
@@ -143,7 +169,8 @@ sub upper {
 
 =head1 AUTHORS
 
-Brad Cavanagh E<lt>b.cavanagh@jach.hawaii.eduE<gt>
+Brad Cavanagh E<lt>b.cavanagh@jach.hawaii.eduE<gt>,
+Alasdair Allan E<lt>aa@astro.ex.ac.ukE<gt>
 
 =head1 COPYRIGHT
 

@@ -82,16 +82,20 @@ sub new {
   croak "Quantity must be defined"
     unless defined $quantity;
     
-  unless ( UNIVERSAL::isa($quantity, "Number::Uncertainy" ) ) {
+  unless ( UNIVERSAL::isa($quantity, "Number::Uncertainty" ) ) {
      $quantity = new Number::Uncertainty( Value => $quantity );    
   }
   
   croak "Type must be defined"
     unless defined $type;
 
-  croak "Waveband must be an Astro::WaveBand object"
-    unless UNIVERSAL::isa($waveband, "Astro::WaveBand");
-
+  croak "Waveband must be defined"
+    unless defined $waveband; 
+  
+  unless ( UNIVERSAL::isa($waveband, "Astro::WaveBand") ) {
+     $waveband = new Astro::WaveBand( Wavelength => $waveband );
+  }
+  
   my $flux = {};
 
   $flux->{QUANTITY} = { uc($type) => $quantity };

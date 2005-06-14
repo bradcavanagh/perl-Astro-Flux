@@ -36,7 +36,8 @@ my %all = $fluxes->allfluxes();
 is( scalar( %all ), '3/8', 'all Astro::Flux objects');
 
 my @wavebands = ( "J", "H", "K" );
-is( sort ( $fluxes->whatwavebands() ), sort ( @wavebands ), 'whatwavebands()' );
+my @sorted_fluxes =  $fluxes->whatwavebands();
+is( @sorted_fluxes, @wavebands, 'whatwavebands()' );
 
 my @jband = $fluxes->fluxesbywaveband( waveband => 'J' );
 is( scalar( @jband ), 2, 'number of J band Astro::Flux objects' );
