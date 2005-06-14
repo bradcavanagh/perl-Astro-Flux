@@ -160,7 +160,7 @@ sub quantity {
 
 Returns the error in the quantity for a requested flux type.
 
-  my $mag = $flux->quantity('mag');
+  my $mag = $flux->error('mag');
 
 No conversions are done between types. What you put in via the
 constructor is all you can get out, so if you specify the type

@@ -26,6 +26,7 @@ use warnings::register;
 use Carp;
 
 use Astro::Flux;
+use Astro::FluxColor;
 use Astro::WaveBand;
 use Misc::Quality;
 
