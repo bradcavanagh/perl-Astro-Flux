@@ -68,10 +68,12 @@ sub new {
       my $quality = new Misc::Quality( 'derived' => 1 );
 
       # Create two flux objects, one for the lower and one for the upper.
-      my $lower_flux = new Astro::Flux( $arg->quantity , 'mag', $arg->lower,
+      my $num = new Number::Uncertainty( Value => $arg->quantity,
+                                         Error => $arg->error );
+      my $lower_flux = new Astro::Flux( $num , 'mag', $arg->lower,
                                         quality => $quality,
                                         reference_waveband => $arg->upper );
-      my $upper_flux = new Astro::Flux( -1.0 * $arg->quantity, 'mag', $arg->upper,
+      my $upper_flux = new Astro::Flux( -1.0 * $num, 'mag', $arg->upper,
                                         quality => $quality,
                                         reference_waveband => $arg->lower );
 
