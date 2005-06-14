@@ -26,6 +26,7 @@ use warnings::register;
 use Carp;
 
 use Astro::Flux;
+use Astro::WaveBand;
 use Misc::Quality;
 
 our $VERSION = '0.01';
