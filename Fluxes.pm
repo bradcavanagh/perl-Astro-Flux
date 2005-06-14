@@ -69,7 +69,8 @@ sub new {
 
       # Create two flux objects, one for the lower and one for the upper.
       my $num = new Number::Uncertainty( Value => $arg->quantity,
-                                         Error => $arg->error );
+                                         Error => $arg->error );			     
+					 
       my $lower_flux = new Astro::Flux( $num , 'mag', $arg->lower,
                                         quality => $quality,
                                         reference_waveband => $arg->upper );
@@ -249,9 +250,17 @@ sub color {
     if( defined( $flux->reference_waveband ) ) {
       my $ref_key = substr( $flux->reference_waveband->natural, 0, 1 );
       if( $ref_key eq $upper_key ) {
+        
+	my $num;
+	if ( defined $flux->error('mag') ) {
+           $num = new Number::Uncertainty ( Value => $flux->quantity('mag'),
+	                                    Error => $flux->error('mag') )
+	} else {
+           $num = new Number::Uncertainty ( Value => $flux->quantity('mag') );
+	}   			    
         return new Astro::FluxColor( lower => $lower,
                                      upper => $upper,
-                                     quantity => $flux->quantity('mag') );
+                                     quantity => $num );
       }
     }
   }
@@ -260,9 +269,20 @@ sub color {
   my $upper_mag = $self->flux( waveband => $upper, derived => 1 );
   my $lower_mag = $self->flux( waveband => $lower, derived => 1 );
   if( defined( $upper_mag ) && defined( $lower_mag ) ) {
+          
+    my $num;
+    my $value = $lower_mag->quantity('mag') - $upper_mag->quantity('mag');
+    if ( defined $upper_mag->error('mag') && $lower_mag->error('mag') ) {
+       my $error = sqrt( $upper_mag->error('mag')*$upper_mag->error('mag')
+                      + $lower_mag->error('mag')*$lower_mag->error('mag') );
+       $num = new Number::Uncertainty ( Value => $value,
+   				        Error => $error )
+    } else {
+       $num = new Number::Uncertainty ( Value => $value );
+    }  
     return new Astro::FluxColor( lower => $lower,
                                  upper => $upper,
-                                 quantity => $lower_mag->quantity('mag') - $upper_mag->quantity('mag') );
+                                 quantity => $num );
   }
 
   # At this point I don't really know how to get a colour. If we're here
