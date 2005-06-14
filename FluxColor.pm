@@ -61,13 +61,13 @@ sub new {
   if( ! defined( $args{'lower'} ) ) {
     croak "Lower waveband must be defined";
   } elsif( ! UNIVERSAL::isa( $args{'lower'}, "Astro::WaveBand" ) ) {
-     $args{'lower'} = new Astro::WaveBand( Wavelength => $args{'lower'} );
+     $args{'lower'} = new Astro::WaveBand( Filter => $args{'lower'} );
   }
 
   if( ! defined( $args{'upper'} ) ) {
     croak "Upper waveband must be defined";
   } elsif( ! UNIVERSAL::isa( $args{'upper'}, "Astro::WaveBand" ) ) {
-     $args{'upper'} = new Astro::WaveBand( Wavelength => $args{'upper'} );
+     $args{'upper'} = new Astro::WaveBand( Filter => $args{'upper'} );
   }
 
   my $quantity;

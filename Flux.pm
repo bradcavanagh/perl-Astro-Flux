@@ -93,7 +93,7 @@ sub new {
     unless defined $waveband; 
   
   unless ( UNIVERSAL::isa($waveband, "Astro::WaveBand") ) {
-     $waveband = new Astro::WaveBand( Wavelength => $waveband );
+     $waveband = new Astro::WaveBand( Filter => $waveband );
   }
   
   my $flux = {};
