@@ -73,7 +73,7 @@ sub new {
   my $quantity;
   if( ! defined( $args{'quantity'} ) ) {
     croak "Color quantity must be defined";
-  } elsif ( ! UNIVERSAL::isa($args{'quantity'}, "Number::Uncertainy" ) ) {
+  } elsif ( ! UNIVERSAL::isa($args{'quantity'}, "Number::Uncertainty" ) ) {
      $quantity = new Number::Uncertainty( Value => $args{'quantity'} );    
   } else {
      $quantity = $args{'quantity'};
