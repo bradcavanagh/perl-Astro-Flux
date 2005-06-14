@@ -2,8 +2,8 @@
 
         * Fluxes.pm: Added whatwavebands().
 	
-	* Flux.pm: Strings are automatically promoted to Astro::WaveBand
-	  objects if we don't have one already.
+	* Flux.pm & FluxColor.pm: Strings are automatically promoted 
+	  to Astro::WaveBand objects if we don't have one already.
 	
 2005-06-13 Alasdair Allan <aa@astro.ex.ac.uk>
 
