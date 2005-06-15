@@ -1,7 +1,10 @@
 2005-06-15 Alasdair Allan <aa@astro.ex.ac.uk>
 
-        * Fluxes.pm: Added merge() support for Fluxes objects, maybe
-	  should overload the '+' operator?
+        * Fluxes.pm: Added merge() support for Fluxes objects.Moved the
+	  hash of arrays containing the fluxes down a level in the blessed
+	  class, added two more array references to give a simple list of
+	  original colors and fluxes. Added query methods to get at this
+	  information.
 	
 	* FluxColor.pm, Flux.pm & Fluxes.pm: Added more time stamp support  
 

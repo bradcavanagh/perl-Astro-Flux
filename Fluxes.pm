@@ -55,12 +55,18 @@ sub new {
   my $proto = shift;
   my $class = ref( $proto ) || $proto;
 
+  my $block = bless { FLUXES => {},
+                      FLUX   => [],
+		      COLOR  => [] }, $class;
+		      
+
   my $fluxes = ();
 
   foreach my $arg ( @_ ) {
     if( UNIVERSAL::isa( $arg, "Astro::Flux" ) ) {
       my $key = substr( $arg->waveband->natural, 0, 1 );
       push @{$fluxes->{$key}}, $arg;
+      push @{$block->{FLUX}}, $key;
     } elsif( UNIVERSAL::isa( $arg, "Astro::FluxColor" ) ) {
 
       # Create an Misc::Quality object saying that these are derived
@@ -91,13 +97,15 @@ sub new {
       }
       push @{$fluxes->{substr( $lower_flux->waveband->natural, 0, 1 )}}, $lower_flux;
       push @{$fluxes->{substr( $upper_flux->waveband->natural, 0, 1 )}}, $upper_flux;
+      
+      my $color = $arg->upper() . "-" . $arg->lower();
+      push @{$block->{COLOR}}, $color;
 
     }
   }
 
-  bless( $fluxes, $class );
-
-  return $fluxes;
+  $block->{FLUXES} = $fluxes;
+  return $block;
 
 }
 
@@ -160,7 +168,7 @@ sub flux {
   my $key = substr( $waveband->natural, 0, 1 );
 
   # Check to see if we have a measured magnitude for this waveband.
-  foreach my $flux ( @{$self->{$key}} ) {
+  foreach my $flux ( @{${$self->{FLUXES}}{$key}} ) {
     if( ! defined( $flux->reference_waveband ) ) {
       if( defined $datetime && defined $flux->datetime ) {
          if( ($datetime <=> $flux->datetime()) == 0 ) {
@@ -182,25 +190,26 @@ sub flux {
   # Get the reference waveband for the current flux such that the
   # reference waveband doesn't have only a pointer back to the current
   # one.
+    
   my ($ref_flux, $ref_datetime);
   my $running_total = undef;
   my $running_error = undef;
-  foreach my $flux ( @{$self->{$key}} ) {
+  foreach my $flux ( @{${$self->{FLUXES}}{$key}} ) {
     if( defined( $flux->reference_waveband ) &&
-        ( scalar( @{$self->{substr( $flux->reference_waveband->natural, 0, 1 )}} > 1 ) ||
-          ${$self->{substr( $flux->reference_waveband->natural, 0, 1 ) }}[0]->reference_waveband != $waveband ) ) {
+        ( scalar( @{${$self->{FLUXES}}{substr( $flux->reference_waveband->natural, 0, 1 )}} > 1 ) ||
+          ${${$self->{FLUXES}}->{substr( $flux->reference_waveband->natural, 0, 1 ) }}[0]->reference_waveband != $waveband ) ) {
       if ( defined $args{'datetime'} ) {
          if ( defined $flux->datetime ) {
             $running_total += $flux->quantity('mag');
             $running_error += $flux->error('mag')*$flux->error('mag');
-            $ref_flux = ${$self->{substr( $flux->reference_waveband->natural, 0, 1 ) }}[0];
+            $ref_flux = ${${$self->{FLUXES}}->{substr( $flux->reference_waveband->natural, 0, 1 ) }}[0];
 	    $ref_datetime = $flux->datetime();
             last;
 	 }   
       } else {
          $running_total += $flux->quantity('mag');
          $running_error += $flux->error('mag')*$flux->error('mag');
-         $ref_flux = ${$self->{substr( $flux->reference_waveband->natural, 0, 1 ) }}[0];
+         $ref_flux = ${${$self->{FLUXES}}{substr( $flux->reference_waveband->natural, 0, 1 ) }}[0];
          last;
       }	          
     }
@@ -303,7 +312,7 @@ sub color {
   my $upper_key = substr( $upper->natural, 0, 1 );
   my $lower_key = substr( $lower->natural, 0, 1 );
   use Data::Dumper;
-  foreach my $flux ( @{$self->{$lower_key}} ) {
+  foreach my $flux ( @{${$self->{FLUXES}}{$lower_key}} ) {
     if( defined( $flux->reference_waveband ) ) {
       
       if ( defined $args{'datetime'} ) {
@@ -409,7 +418,7 @@ sub pushfluxes {
   foreach my $arg ( @_ ) {
     if( UNIVERSAL::isa( $arg, "Astro::Flux" ) ) {
       my $key = substr( $arg->waveband->natural, 0, 1 );
-     push @{$self->{$key}}, $arg;
+     push @{${$self->{FLUXES}}{$key}}, $arg;
     } elsif( UNIVERSAL::isa( $arg, "Astro::FluxColor" ) ) {
 
       # Create an Misc::Quality object saying that these are derived
@@ -444,8 +453,8 @@ sub pushfluxes {
                                         reference_waveband => $arg->lower );      
       }
 
-      push @{$self->{substr( $lower_flux->waveband->natural, 0, 1 )}}, $lower_flux;
-      push @{$self->{substr( $upper_flux->waveband->natural, 0, 1 )}}, $upper_flux;
+      push @{${$self->{FLUXES}}->{substr( $lower_flux->waveband->natural, 0, 1 )}}, $lower_flux;
+      push @{${$self->{FLUXES}}->{substr( $upper_flux->waveband->natural, 0, 1 )}}, $upper_flux;
 
     }
   }
@@ -466,7 +475,7 @@ C<Astro::Fluxes> object,
 sub allfluxes {
   my $self = shift;
    
-  return %{$self};
+  return %{$self->{FLUXES}};
 
 }
 
@@ -499,7 +508,7 @@ sub fluxesbywaveband {
 
   # The key is the first character in the waveband.
   my $key = substr( $waveband->natural, 0, 1 );
-  return @{$self->{$key}};
+  return @{${$self->{FLUXES}}{$key}};
 }
 
 
@@ -518,12 +527,38 @@ sub whatwavebands {
   my $result;
 
   my @wavebands;
-  foreach my $key ( sort keys %{$self} ) {
+  foreach my $key ( sort keys %{$self->{FLUXES}} ) {
      push @wavebands, $key;
   }   
   return @wavebands;
 }
 
+
+=item B<original_colors>
+
+Returns an array of the original (not derived) colors contained in the object
+
+  @colors = $fluxes->original_colors( );
+
+=cut
+
+sub original_colors {
+  my $self = shift;
+  return @{$self->{COLOR}};
+}
+
+=item B<original_filters>
+
+Returns an array of the original (not derived) filters contained in the object
+
+  @filters = $fluxes->original_filters( );
+
+=cut
+
+sub original_filters {
+  my $self = shift;
+  return @{$self->{FLUX}};
+}
 
 =item B<merge>
 
@@ -541,11 +576,33 @@ sub merge {
                       unless UNIVERSAL::isa( $other, "Astro::Fluxes" );
   
   my %fluxes = $other->allfluxes();
+  my @filters = $other->original_filters();
+  my @colours = $other->original_colors();
   foreach my $key ( keys %fluxes ) {
       my $value = $fluxes{$key};
       foreach my $i ( 0 ... $#{$value} ) {
         #use Data::Dumper; print "Item $key $i\n" . Dumper ${$value}[$i] . "\n\n\n";
-        push @{$self->{$key}}, ${$value}[$i];
+        push @{${$self->{FLUXES}}{$key}}, ${$value}[$i];
+	foreach my $i ( 0 ... $#colours ) {
+	   my $flag = 0;
+	   foreach my $j ( 0 ... $#{$self->{COLOR}} ) {
+	      if ( ${$self->{COLOR}}[$j] eq $colours[$i] ) {
+	         $flag = 1;
+		 last;
+	      }	 
+	   }
+	   push @{$self->{COLOR}}, $colours[$i] if $flag != 1;    
+	}
+	foreach my $i ( 0 ... $#filters ) {
+	   my $flag = 0;
+	   foreach my $j ( 0 ... $#{$self->{FLUX}} ) {
+	      if ( ${$self->{FLUX}}[$j] eq $filters[$i] ) {
+	         $flag = 1;
+		 last;
+	      }	
+	   }
+	   push @{$self->{FLUX}}, $filters[$i] if $flag != 1;  	
+	}
       }
   }
     
