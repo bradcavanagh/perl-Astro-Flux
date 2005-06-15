@@ -1,9 +1,12 @@
-MANIFEST
-README
+ChangeLog
 Flux.pm
 Fluxes.pm
 FluxColor.pm
-ChangeLog
+MANIFEST
+Makefile.PL
+README
 t/00_basic.t
 t/10_fluxcolor.t
 t/20_fluxes.t
+t/25_allfluxes                                                    
+t/30_merge
