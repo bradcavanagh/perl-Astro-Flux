@@ -10,7 +10,8 @@ use Astro::FluxColor;
 
   $color = new Astro::FluxColor( lower => $lower_waveband,
                                  upper => $upper_waveband,
-                                 quantity => $quantity );
+                                 quantity => $quantity,
+				 datetime => new DateTime );
 
   $quantity = $color->quantity;
 
@@ -43,7 +44,8 @@ Create a new instance of an C<Astro::FluxColor> object.
 
 $color = new Astro::FluxColor( lower => $lower_waveband,
                                upper => $upper_waveband,
-                               quantity => $quantity );
+                               quantity => $quantity,
+			       datetime => new DateTime );
 
 The three named parameters are mandatory. F<lower> and F<upper>
 denote the lower and upper wavebands for the colour, and
@@ -83,7 +85,15 @@ sub new {
   $color->{LOWER} = $args{'lower'};
   $color->{UPPER} = $args{'upper'};
   $color->{QUANTITY} = $quantity;
-
+  
+  if( defined( $args{'datetime'} ) ) {
+     unless ( UNIVERSAL::isa( $args{'datetime'}, "DateTime" ) ) {
+        croak "Time stamp must be a DateTime object\n";
+     } else {
+        $color->{TIME} = $args{'datetime'};
+     }
+  }
+  
   bless( $color, $class );
   return $color;
 
@@ -159,6 +169,23 @@ There are no parameters. An C<Astro::WaveBand> object is returned.
 sub upper {
   my $self = shift;
   return $self->{UPPER};
+}
+
+
+=item B<datetime>
+
+Returns the datetime stamp for the given flux object.
+
+  my $datetime = $flux->datetime;
+
+Returns an C<Date::datetime> object if defined. If not, returns undef.
+
+=cut
+
+sub datetime {
+  my $self = shift;
+
+  return $self->{TIME};
 }
 
 =back

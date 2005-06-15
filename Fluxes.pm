@@ -70,14 +70,25 @@ sub new {
       # Create two flux objects, one for the lower and one for the upper.
       my $num = new Number::Uncertainty( Value => $arg->quantity,
                                          Error => $arg->error );			     
-					 
-      my $lower_flux = new Astro::Flux( $num , 'mag', $arg->lower,
+	
+      my ( $lower_flux, $upper_flux );					 
+      if ( defined $arg->datetime() ) {
+         $lower_flux = new Astro::Flux( $num , 'mag', $arg->lower,
+        			     quality => $quality,
+        			     reference_waveband => $arg->upper,
+				     datetime => $arg->datetime );
+         $upper_flux = new Astro::Flux( -1.0 * $num, 'mag', $arg->upper,
                                         quality => $quality,
-                                        reference_waveband => $arg->upper );
-      my $upper_flux = new Astro::Flux( -1.0 * $num, 'mag', $arg->upper,
+                                        reference_waveband => $arg->lower,
+				       datetime => $arg->datetime );
+      } else {
+         $lower_flux = new Astro::Flux( $num , 'mag', $arg->lower,
+        			     quality => $quality,
+        			     reference_waveband => $arg->upper );
+         $upper_flux = new Astro::Flux( -1.0 * $num, 'mag', $arg->upper,
                                         quality => $quality,
-                                        reference_waveband => $arg->lower );
-
+                                        reference_waveband => $arg->lower );      
+      }
       push @{$fluxes->{substr( $lower_flux->waveband->natural, 0, 1 )}}, $lower_flux;
       push @{$fluxes->{substr( $upper_flux->waveband->natural, 0, 1 )}}, $upper_flux;
 
@@ -112,6 +123,9 @@ Optional arguments are:
   derived - Whether or not to return fluxes that have been derived
     from colors. Defaults to false, so that derived fluxes will not
     be returned.
+    
+  datetime - whether we should return a flux from a specified object,
+    should be passed as a C<DateTime> object.  
 
 This method returns an C<Astro::Flux> object.
 
@@ -135,14 +149,28 @@ sub flux {
     $waveband = new Astro::WaveBand( Filter => $waveband );
   }
 
+  my $datetime = $args{'datetime'};
+  if ( defined $datetime ) {
+     unless ( UNIVERSAL::isa( $datetime, "DateTime" ) ) {
+        croak( "Astro::Fluxes::flux() - Time must be a DateTime object\n" );
+     }
+  }
+  
   # The key is the first character in the waveband.
   my $key = substr( $waveband->natural, 0, 1 );
 
   # Check to see if we have a measured magnitude for this waveband.
   foreach my $flux ( @{$self->{$key}} ) {
     if( ! defined( $flux->reference_waveband ) ) {
-      $result = $flux;
-      last;
+      if( defined $datetime && defined $flux->datetime ) {
+         if( ($datetime <=> $flux->datetime()) == 0 ) {
+            $result = $flux;
+	    last;
+	 } 
+      } else {
+         $result = $flux;
+         last;
+      }	 
     }
   }
 
@@ -154,17 +182,27 @@ sub flux {
   # Get the reference waveband for the current flux such that the
   # reference waveband doesn't have only a pointer back to the current
   # one.
-  my $ref_flux;
+  my ($ref_flux, $ref_datetime);
   my $running_total = undef;
   my $running_error = undef;
   foreach my $flux ( @{$self->{$key}} ) {
     if( defined( $flux->reference_waveband ) &&
         ( scalar( @{$self->{substr( $flux->reference_waveband->natural, 0, 1 )}} > 1 ) ||
           ${$self->{substr( $flux->reference_waveband->natural, 0, 1 ) }}[0]->reference_waveband != $waveband ) ) {
-      $running_total += $flux->quantity('mag');
-      $running_error += $flux->error('mag')*$flux->error('mag');
-      $ref_flux = ${$self->{substr( $flux->reference_waveband->natural, 0, 1 ) }}[0];
-      last;
+      if ( defined $args{'datetime'} ) {
+         if ( defined $flux->datetime ) {
+            $running_total += $flux->quantity('mag');
+            $running_error += $flux->error('mag')*$flux->error('mag');
+            $ref_flux = ${$self->{substr( $flux->reference_waveband->natural, 0, 1 ) }}[0];
+	    $ref_datetime = $flux->datetime();
+            last;
+	 }   
+      } else {
+         $running_total += $flux->quantity('mag');
+         $running_error += $flux->error('mag')*$flux->error('mag');
+         $ref_flux = ${$self->{substr( $flux->reference_waveband->natural, 0, 1 ) }}[0];
+         last;
+      }	          
     }
   }
 
@@ -173,11 +211,18 @@ sub flux {
   if( defined( $ref_flux ) ) {
     my $mag = $self->flux( waveband => $ref_flux->waveband, derived => 1 )->quantity('mag');
     my $err = $self->flux( waveband => $ref_flux->waveband, derived => 1 )->error('mag');
-    $running_total += $mag;
-    $running_error += $err if defined $err;
+    if ( defined $args{'datetime'} ) {
+       if ( defined $ref_datetime ) {
+          $running_total += $mag;
+          $running_error += $err if defined $err;
+       }
+    } else {
+       $running_total += $mag;
+       $running_error += $err if defined $err;  
+    }   	       
   }
 
-  $running_error = sqrt( $running_error );
+  $running_error = sqrt( $running_error ) if defined $running_error;
   
   # Form a flux object with the running total and the input waveband,
   # and return that.
@@ -192,10 +237,16 @@ sub flux {
        $number = $running_total;
     }
        					  
-    my $returned_flux = new Astro::Flux( $number, 'mag', $waveband, 
-                            quality => new Misc::Quality( derived => 1 ) );
-			    
-    return $returned_flux;			    
+    if ( defined $args{'datetime'} ) {
+       my $returned_flux = new Astro::Flux( $number, 'mag', $waveband, 
+                            quality => new Misc::Quality( derived => 1 ),
+			    datetime => $ref_datetime );
+       return $returned_flux;			    
+    } else {
+       my $returned_flux = new Astro::Flux( $number, 'mag', $waveband, 
+                            quality => new Misc::Quality( derived => 1 ) );			    
+       return $returned_flux;
+    } 			    
   }
   
 }
@@ -207,13 +258,19 @@ Returns the color for two requested wavebands.
 my $color = $fluxes->color( upper => new Astro::WaveBand( Filter => 'H' ),
                             lower => new Astro::WaveBand( Filter => 'J' ) );
 
+my $color = $fluxes->color( upper => new Astro::WaveBand( Filter => 'H' ),
+                            lower => new Astro::WaveBand( Filter => 'J' ),
+			    datetime => new DateTime );
+
 Arguments are passed as key-value pairs. The two mandatory named arguments are
 'upper' and 'lower', denoting the upper (longer wavelength) and lower (shorter
 wavelength) wavebands for the color. The value for either can be either an
 C<Astro::WaveBand> object or a string that can be used to create a new
 C<Astro::WaveBand> object via its Filter parameter.
 
-The above example will return the H-K color.
+The above example will return the first H-K color in the Fluxes object. The 
+optional datetime arguement allows you to return a colour at a specific datetime
+stamp.
 
 =cut
 
@@ -248,6 +305,17 @@ sub color {
   use Data::Dumper;
   foreach my $flux ( @{$self->{$lower_key}} ) {
     if( defined( $flux->reference_waveband ) ) {
+      
+      if ( defined $args{'datetime'} ) {
+         next unless defined $flux->datetime;
+         if ( ($flux->datetime <=> $args{'datetime'}) != 0 ) {
+	    my $datetime = $flux->datetime;
+	    next;
+         } else {
+	   my $datetime = $flux->datetime;
+	 }  
+      }
+      	 
       my $ref_key = substr( $flux->reference_waveband->natural, 0, 1 );
       if( $ref_key eq $upper_key ) {
         
@@ -257,19 +325,38 @@ sub color {
 	                                    Error => $flux->error('mag') )
 	} else {
            $num = new Number::Uncertainty ( Value => $flux->quantity('mag') );
-	}   			    
-        return new Astro::FluxColor( lower => $lower,
-                                     upper => $upper,
-                                     quantity => $num );
+	}  
+	
+	if ( defined $flux->datetime() ) { 			    
+           my $color = new Astro::FluxColor( lower => $lower,
+                                         upper => $upper,
+                                         quantity => $num,
+				         datetime => $flux->datetime() ); 
+	   return $color;				   
+	} else {
+           my $color = new Astro::FluxColor( lower => $lower,
+                                         upper => $upper,
+                                         quantity => $num ); 
+	   return $color;
+	}   									 
       }
     }
   }
 
   # So we're here. Maybe we can get magnitudes for the upper and lower wavebands.
-  my $upper_mag = $self->flux( waveband => $upper, derived => 1 );
-  my $lower_mag = $self->flux( waveband => $lower, derived => 1 );
+  my $upper_mag;
+  my $lower_mag;
+  if ( defined( $args{'datetime'} ) ) {
+      $upper_mag = $self->flux( waveband => $upper, derived => 1, 
+                                datetime => $args{'datetime'} );
+      $lower_mag = $self->flux( waveband => $lower, derived => 1, 
+                                datetime => $args{'datetime'} );
+  } else {
+      $upper_mag = $self->flux( waveband => $upper, derived => 1 );
+      $lower_mag = $self->flux( waveband => $lower, derived => 1 );  
+  }      
   if( defined( $upper_mag ) && defined( $lower_mag ) ) {
-          
+    	       
     my $num;
     my $value = $lower_mag->quantity('mag') - $upper_mag->quantity('mag');
     if ( defined $upper_mag->error('mag') && $lower_mag->error('mag') ) {
@@ -280,16 +367,25 @@ sub color {
     } else {
        $num = new Number::Uncertainty ( Value => $value );
     }  
-    return new Astro::FluxColor( lower => $lower,
-                                 upper => $upper,
-                                 quantity => $num );
+    if ( defined $lower_mag->datetime() && defined $upper_mag->datetime() ) {			
+       my $color = new Astro::FluxColor( lower => $lower,
+    				     upper => $upper,
+    				     quantity => $num,
+    				     datetime => $lower_mag->datetime() ); 
+       return $color;				       
+    } else {
+       my $color = new Astro::FluxColor( lower => $lower,
+    				     upper => $upper,
+    				     quantity => $num ); 
+       return $color;
+    }			    
   }
 
   # At this point I don't really know how to get a colour. If we're here
   # that means we have some kind of colour-colour relation that we might
   # be able to get the desired colour from...
 
-  # Return undef in the meantime.
+  # Return undef in the meandatetime.
   return undef;
 
 }
@@ -319,14 +415,34 @@ sub pushfluxes {
       # Create an Misc::Quality object saying that these are derived
       # magnitudes.
       my $quality = new Misc::Quality( 'derived' => 1 );
-
+        
+      my $num;
+      if ( defined $arg->error('mag') ) {
+         $num = new Number::Uncertainty ( Value => $arg->quantity('mag'),
+        				  Error => $arg->error('mag') )
+      } else {
+         $num = new Number::Uncertainty ( Value => $arg->quantity('mag') );
+      }  
+	
       # Create two flux objects, one for the lower and one for the upper.
-      my $lower_flux = new Astro::Flux( $arg->quantity , 'mag', $arg->lower,
+      my ( $lower_flux, $upper_flux );					 
+      if ( defined $arg->datetime() ) {
+         $lower_flux = new Astro::Flux( $num , 'mag', $arg->lower,
+        			     quality => $quality,
+        			     reference_waveband => $arg->upper,
+				     datetime => $arg->datetime );
+         $upper_flux = new Astro::Flux( -1.0 * $num, 'mag', $arg->upper,
                                         quality => $quality,
-                                        reference_waveband => $arg->upper );
-      my $upper_flux = new Astro::Flux( -1.0 * $arg->quantity, 'mag', $arg->upper,
+                                        reference_waveband => $arg->lower,
+				       datetime => $arg->datetime );
+      } else {
+         $lower_flux = new Astro::Flux( $num , 'mag', $arg->lower,
+        			     quality => $quality,
+        			     reference_waveband => $arg->upper );
+         $upper_flux = new Astro::Flux( -1.0 * $num, 'mag', $arg->upper,
                                         quality => $quality,
-                                        reference_waveband => $arg->lower );
+                                        reference_waveband => $arg->lower );      
+      }
 
       push @{$self->{substr( $lower_flux->waveband->natural, 0, 1 )}}, $lower_flux;
       push @{$self->{substr( $upper_flux->waveband->natural, 0, 1 )}}, $upper_flux;
@@ -406,6 +522,35 @@ sub whatwavebands {
      push @wavebands, $key;
   }   
   return @wavebands;
+}
+
+
+=item B<merge>
+
+Merges another C<Astro::Fluxes> object with this object
+
+  $fluxes1->merge( $fluxes2 );
+
+=cut
+
+sub merge {
+  my $self = shift;
+  my $other = shift;
+  
+  croak "Astro::Fluxes::merge() - Not an Astro::Fluxes object\n"
+                      unless UNIVERSAL::isa( $other, "Astro::Fluxes" );
+  
+  my %fluxes = $other->allfluxes();
+  foreach my $key ( keys %fluxes ) {
+      my $value = $fluxes{$key};
+      foreach my $i ( 0 ... $#{$value} ) {
+        #use Data::Dumper; print "Item $key $i\n" . Dumper ${$value}[$i] . "\n\n\n";
+        push @{$self->{$key}}, ${$value}[$i];
+      }
+  }
+    
+  return %{$self};
+
 }
 
 =back

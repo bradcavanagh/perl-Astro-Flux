@@ -64,7 +64,7 @@ the following optional keys:
     waveband for the C<Astro::Flux> object. This is used for determining
     magnitudes when deriving them from C<Astro::FluxColor> objects. See
     C<Astro::Fluxes>.
-  time - an C<DateTime> object which is the time of observation for the
+  datetime - an C<DateTime> object which is the datetime of observation for the
   measurement in the C<Astro::Flux> object.  
 
 =cut
@@ -110,9 +110,9 @@ sub new {
     $flux->{REFERENCE_WAVEBAND} = $args{'reference_waveband'};
   }
   
-  if( defined( $args{'time'} ) &&
-      UNIVERSAL::isa( $args{'time'}, "DateTime" ) ) {
-    $flux->{TIME} = $args{'time'};
+  if( defined( $args{'datetime'} ) &&
+      UNIVERSAL::isa( $args{'datetime'}, "DateTime" ) ) {
+    $flux->{TIME} = $args{'datetime'};
   }
 
   bless( $flux, $class );
@@ -237,17 +237,17 @@ sub reference_waveband {
 }
 
 
-=item B<time>
+=item B<datetime>
 
-Returns the time stamp for the given flux object.
+Returns the datetime stamp for the given flux object.
 
-  my $time = $flux->time;
+  my $datetime = $flux->datetime;
 
-Returns an C<Date::time> object if defined. If not, returns undef.
+Returns an C<Date::datetime> object if defined. If not, returns undef.
 
 =cut
 
-sub time {
+sub datetime {
   my $self = shift;
 
   return $self->{TIME};
