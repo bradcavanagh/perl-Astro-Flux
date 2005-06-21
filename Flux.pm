@@ -239,9 +239,10 @@ sub reference_waveband {
 
 =item B<datetime>
 
-Returns the datetime stamp for the given flux object.
+Sets or returns the datetime stamp for the given flux object.
 
   my $datetime = $flux->datetime;
+  $flux->datetime( new DateTime );
 
 Returns an C<Date::datetime> object if defined. If not, returns undef.
 
@@ -249,6 +250,10 @@ Returns an C<Date::datetime> object if defined. If not, returns undef.
 
 sub datetime {
   my $self = shift;
+ 
+  if (@_) {
+    $self->{TIME} = shift;
+  }
 
   return $self->{TIME};
 }

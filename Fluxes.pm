@@ -29,6 +29,7 @@ use Astro::Flux;
 use Astro::FluxColor;
 use Astro::WaveBand;
 use Misc::Quality;
+use Storable qw/ dclone /;
 
 our $VERSION = '0.01';
 
@@ -606,6 +607,35 @@ sub merge {
       }
   }
     
+  return %{$self};
+
+}
+
+
+
+=item B<datestamp>
+
+Applies a datestamp to all C<Astro::Flux> object with this object
+
+  $fluxes->datestamp( new DateTime );
+
+=cut
+
+sub datestamp {
+  my $self = shift;
+  my $timestamp = shift;
+  
+  croak "Astro::Fluxes::datestamp() - Not an DateTime object\n"
+                      unless UNIVERSAL::isa( $timestamp, "DateTime" );
+  
+  
+  foreach my $key ( keys %{$self->{FLUXES}} ) {
+      foreach my $j ( 0 ... $#{${$self->{FLUXES}}{$key}} ) {
+         my $date = dclone( $timestamp );
+         ${${$self->{FLUXES}}{$key}}[$j]->datetime( $date );
+      }
+  }    	 
+      
   return %{$self};
 
 }

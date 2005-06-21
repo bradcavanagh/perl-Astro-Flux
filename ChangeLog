@@ -1,3 +1,9 @@
+2005-06-21 Alasdair Allan <aa@astro.ex.ac.uk>
+
+        * Fluxes.pm: Added datestamp() routine and supporting infrastrcutre
+	  to Flux.pm so that you can stamp all the Astro::Flux objects in
+	  an Astro::Fluxes object with a DateTime object in one go.
+	  
 2005-06-15 Alasdair Allan <aa@astro.ex.ac.uk>
 
         * Fluxes.pm: Added merge() support for Fluxes objects.Moved the

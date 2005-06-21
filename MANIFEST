@@ -8,5 +8,6 @@ README
 t/00_basic.t
 t/10_fluxcolor.t
 t/20_fluxes.t
-t/25_allfluxes                                                    
-t/30_merge
+t/25_allfluxes.t                                                    
+t/30_merge.t
+t/35_datestamp.t
