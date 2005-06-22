@@ -1,3 +1,9 @@
+ 20065-06-21 Brad Cavanagh <b.cavanagh@jach.hawaii.edu>
+
+      * Flux.pm: Add obsid() accessor to allow for observation
+      identifier for each flux measurement (e.g. filename from
+      which the measurement was taken).
+
 2005-06-21 Alasdair Allan <aa@astro.ex.ac.uk>
 
         * Fluxes.pm: Added datestamp() routine and supporting infrastrcutre
