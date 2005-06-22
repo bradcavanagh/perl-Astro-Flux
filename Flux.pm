@@ -42,7 +42,7 @@ Create a new instance of an C<Astro::Flux> object.
 
   $flux = new Astro::Flux( $quantity, $type, $waveband );
 
-All three parameters must be defined. They are:
+The first three parameters must be defined. They are:
 
   quantity - numerical value for the flux, my be a primitive, or a
              C<Number::Uncertainty> object.
@@ -65,7 +65,10 @@ the following optional keys:
     magnitudes when deriving them from C<Astro::FluxColor> objects. See
     C<Astro::Fluxes>.
   datetime - an C<DateTime> object which is the datetime of observation for the
-  measurement in the C<Astro::Flux> object.  
+    measurement in the C<Astro::Flux> object.
+  obsid - A string denoting an observation identifier. Can be used to
+    uniquely identify the observation from which this measurement was
+    taken (e.g. from a filename).
 
 =cut
 
@@ -81,21 +84,21 @@ sub new {
 
   croak "Quantity must be defined"
     unless defined $quantity;
-    
+
   unless ( UNIVERSAL::isa($quantity, "Number::Uncertainty" ) ) {
-     $quantity = new Number::Uncertainty( Value => $quantity );    
+     $quantity = new Number::Uncertainty( Value => $quantity );
   }
-  
+
   croak "Type must be defined"
     unless defined $type;
 
   croak "Waveband must be defined"
-    unless defined $waveband; 
-  
+    unless defined $waveband;
+
   unless ( UNIVERSAL::isa($waveband, "Astro::WaveBand") ) {
      $waveband = new Astro::WaveBand( Filter => $waveband );
   }
-  
+
   my $flux = {};
 
   $flux->{QUANTITY} = { uc($type) => $quantity };
@@ -113,6 +116,10 @@ sub new {
   if( defined( $args{'datetime'} ) &&
       UNIVERSAL::isa( $args{'datetime'}, "DateTime" ) ) {
     $flux->{TIME} = $args{'datetime'};
+  }
+
+  if( defined( $args{'obsid'} ) ) {
+    $flux->{OBSID} = $args{'obsid'};
   }
 
   bless( $flux, $class );
@@ -256,6 +263,24 @@ sub datetime {
   }
 
   return $self->{TIME};
+}
+
+=item B<obsid>
+
+Sets or returns the observation ID for the given flux object.
+
+  my $obsid = $flux->obsid;
+  $flux->obsid( $obsid );
+
+=cut
+
+sub obsid {
+  my $self = shift;
+
+  if( @_ ) {
+    $self->{OBSID} = shift;
+  }
+  return $self->{OBSID};
 }
 
 =back
