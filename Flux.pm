@@ -66,8 +66,8 @@ the following optional keys:
     C<Astro::Fluxes>.
   datetime - an C<DateTime> object which is the datetime of observation for the
     measurement in the C<Astro::Flux> object.
-  obsid - A string denoting an observation identifier. Can be used to
-    uniquely identify the observation from which this measurement was
+  obsid - An array reference to a list of observation identifiers. Can be
+    used to identify the observation(s) from which this measurement was
     taken (e.g. from a filename).
 
 =cut
@@ -112,7 +112,7 @@ sub new {
       UNIVERSAL::isa( $args{'reference_waveband'}, "Astro::WaveBand" ) ) {
     $flux->{REFERENCE_WAVEBAND} = $args{'reference_waveband'};
   }
-  
+
   if( defined( $args{'datetime'} ) &&
       UNIVERSAL::isa( $args{'datetime'}, "DateTime" ) ) {
     $flux->{TIME} = $args{'datetime'};
@@ -271,6 +271,8 @@ Sets or returns the observation ID for the given flux object.
 
   my $obsid = $flux->obsid;
   $flux->obsid( $obsid );
+
+Returns an array reference if defined. If not, returns undef.
 
 =cut
 
