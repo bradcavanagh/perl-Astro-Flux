@@ -122,7 +122,7 @@ sub flux {
   }
   
   # The key is the first character in the waveband.
-  my $key = substr( $waveband->natural, 0, 1 );
+  my $key = $waveband->natural;
 
   # Check to see if we have a measured magnitude for this waveband.
   foreach my $flux ( @{${$self->{FLUXES}}{$key}} ) {
@@ -153,20 +153,20 @@ sub flux {
   my $running_error = undef;
   foreach my $flux ( @{${$self->{FLUXES}}{$key}} ) {
     if( defined( $flux->reference_waveband ) &&
-        ( scalar( @{${$self->{FLUXES}}{substr( $flux->reference_waveband->natural, 0, 1 )}} > 1 ) ||
-          ${${$self->{FLUXES}}->{substr( $flux->reference_waveband->natural, 0, 1 ) }}[0]->reference_waveband != $waveband ) ) {
+        ( scalar( @{${$self->{FLUXES}}{$flux->reference_waveband->natural}} > 1 ) ||
+          ${${$self->{FLUXES}}->{$flux->reference_waveband->natural}}[0]->reference_waveband != $waveband ) ) {
       if ( defined $args{'datetime'} ) {
          if ( defined $flux->datetime ) {
             $running_total += $flux->quantity('mag');
             $running_error += $flux->error('mag')*$flux->error('mag');
-            $ref_flux = ${${$self->{FLUXES}}->{substr( $flux->reference_waveband->natural, 0, 1 ) }}[0];
+            $ref_flux = ${${$self->{FLUXES}}->{$flux->reference_waveband->natural}}[0];
 	    $ref_datetime = $flux->datetime();
             last;
 	 }   
       } else {
          $running_total += $flux->quantity('mag');
          $running_error += $flux->error('mag')*$flux->error('mag');
-         $ref_flux = ${${$self->{FLUXES}}{substr( $flux->reference_waveband->natural, 0, 1 ) }}[0];
+         $ref_flux = ${${$self->{FLUXES}}{$flux->reference_waveband->natural}}[0];
          last;
       }	          
     }
@@ -266,8 +266,6 @@ sub color {
 
   # First, find out if we have an easy job. Check if the lower refers to
   # the upper, from which we can get the colour directly.
-  #my $upper_key = substr( $upper->natural, 0, 1 );
-  #my $lower_key = substr( $lower->natural, 0, 1 );
   my $upper_key = $upper->natural();
   my $lower_key = $lower->natural();
   foreach my $flux ( @{${$self->{FLUXES}}{$lower_key}} ) {
@@ -375,7 +373,6 @@ sub pushfluxes {
 
   foreach my $arg ( @_ ) {
     if( UNIVERSAL::isa( $arg, "Astro::Flux" ) ) {
-      #my $key = substr( $arg->waveband->natural, 0, 1 );
       my $key = $arg->waveband()->natural();
       push @{${$self->{FLUXES}}{$key}}, $arg;
       push @{$self->{FLUX}}, $arg->waveband();
@@ -407,8 +404,6 @@ sub pushfluxes {
                                         quality => $quality,
                                         reference_waveband => $arg->lower );      
       }
-      #push @{${$self->{FLUXES}}->{substr( $lower_flux->waveband->natural, 0, 1 )}}, $lower_flux;
-      #push @{${$self->{FLUXES}}->{substr( $upper_flux->waveband->natural, 0, 1 )}}, $upper_flux;
       my $lower_key = $lower_flux->waveband->natural;
       my $upper_key = $upper_flux->waveband->natural;
       push @{${$self->{FLUXES}}{$lower_key}}, $lower_flux;
