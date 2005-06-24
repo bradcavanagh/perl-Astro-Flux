@@ -1,3 +1,9 @@
+2005-06-24 Brad Cavanagh <b.cavanagh@jach.hawaii.edu>
+
+	* Fluxes.pm: Add ability to look up flux for a specific flux
+	  type via flux() method, defaulting to 'mag'.
+	* Flux.pm: Add type() accessor to retrieve flux object's type.
+
 2005-06-23 Alasdair Allan <aa@astro.ex.ac.uk>
 
         * Serious changes to the internal architecture of Flux.pm and
