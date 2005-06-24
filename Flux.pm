@@ -103,6 +103,7 @@ sub new {
 
   $flux->{QUANTITY} = { uc($type) => $quantity };
   $flux->{WAVEBAND} = $waveband;
+  $flux->{TYPE} = uc( $type );
 
   if( defined( $args{'quality'} ) &&
       UNIVERSAL::isa( $args{'quality'}, "Misc::Quality" ) ) {
@@ -283,6 +284,21 @@ sub obsid {
     $self->{OBSID} = shift;
   }
   return $self->{OBSID};
+}
+
+=item B<type>
+
+Returns the type of flux measurement stored.
+
+  my $type = $flux->type;
+
+Cannot be used to set the type.
+
+=cut
+
+sub type {
+  my $self = shift;
+  return $self->{TYPE};
 }
 
 =back
