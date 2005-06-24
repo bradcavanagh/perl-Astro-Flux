@@ -37,7 +37,6 @@ is( $fluxes2->color( lower => new Astro::WaveBand( Filter => 'J' ),
     
 $fluxes1->merge( $fluxes2 );
 
-
 is( $fluxes1->color( lower => new Astro::WaveBand( Filter => 'J' ), 
                     upper => new Astro::WaveBand( Filter => 'H' ) )->quantity,
     -3, 'Retrieval of derived color');
@@ -45,7 +44,6 @@ is( $fluxes1->color( lower => new Astro::WaveBand( Filter => 'J' ),
 is( $fluxes1->color( lower => new Astro::WaveBand( Filter => 'H' ), 
                     upper => new Astro::WaveBand( Filter => 'K' ) )->quantity,
     130, 'Retrieval of derived color');
-    
 
 my $time1 = DateTime->now();
 my $time2 = DateTime->now()->add( months => 1 );
@@ -81,5 +79,4 @@ is( $fluxes1->color( lower => new Astro::WaveBand( Filter => 'H' ),
 is( $fluxes1->color( lower => new Astro::WaveBand( Filter => 'H' ), 
                     upper => new Astro::WaveBand( Filter => 'K' ),
 		    datetime => $time2 )->quantity,
-    14.5, 'Retrieval of derived color');       
-print Dumper( $fluxes1 );    
+    14.5, 'Retrieval of derived color');        

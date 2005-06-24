@@ -61,51 +61,7 @@ sub new {
 		      COLOR  => [] }, $class;
 		      
 
-  my $fluxes = ();
-
-  foreach my $arg ( @_ ) {
-    if( UNIVERSAL::isa( $arg, "Astro::Flux" ) ) {
-      my $key = substr( $arg->waveband->natural, 0, 1 );
-      push @{$fluxes->{$key}}, $arg;
-      push @{$block->{FLUX}}, $key;
-    } elsif( UNIVERSAL::isa( $arg, "Astro::FluxColor" ) ) {
-
-      # Create an Misc::Quality object saying that these are derived
-      # magnitudes.
-      my $quality = new Misc::Quality( 'derived' => 1 );
-
-      # Create two flux objects, one for the lower and one for the upper.
-      my $num = new Number::Uncertainty( Value => $arg->quantity,
-                                         Error => $arg->error );			     
-	
-      my ( $lower_flux, $upper_flux );					 
-      if ( defined $arg->datetime() ) {
-         $lower_flux = new Astro::Flux( $num , 'mag', $arg->lower,
-        			     quality => $quality,
-        			     reference_waveband => $arg->upper,
-				     datetime => $arg->datetime );
-         $upper_flux = new Astro::Flux( -1.0 * $num, 'mag', $arg->upper,
-                                        quality => $quality,
-                                        reference_waveband => $arg->lower,
-				       datetime => $arg->datetime );
-      } else {
-         $lower_flux = new Astro::Flux( $num , 'mag', $arg->lower,
-        			     quality => $quality,
-        			     reference_waveband => $arg->upper );
-         $upper_flux = new Astro::Flux( -1.0 * $num, 'mag', $arg->upper,
-                                        quality => $quality,
-                                        reference_waveband => $arg->lower );      
-      }
-      push @{$fluxes->{substr( $lower_flux->waveband->natural, 0, 1 )}}, $lower_flux;
-      push @{$fluxes->{substr( $upper_flux->waveband->natural, 0, 1 )}}, $upper_flux;
-      
-      my $color = $arg->upper() . "-" . $arg->lower();
-      push @{$block->{COLOR}}, $color;
-
-    }
-  }
-
-  $block->{FLUXES} = $fluxes;
+  $block = $block->pushfluxes( @_ ) if @_;
   return $block;
 
 }
@@ -310,9 +266,10 @@ sub color {
 
   # First, find out if we have an easy job. Check if the lower refers to
   # the upper, from which we can get the colour directly.
-  my $upper_key = substr( $upper->natural, 0, 1 );
-  my $lower_key = substr( $lower->natural, 0, 1 );
-  use Data::Dumper;
+  #my $upper_key = substr( $upper->natural, 0, 1 );
+  #my $lower_key = substr( $lower->natural, 0, 1 );
+  my $upper_key = $upper->natural();
+  my $lower_key = $lower->natural();
   foreach my $flux ( @{${$self->{FLUXES}}{$lower_key}} ) {
     if( defined( $flux->reference_waveband ) ) {
       
@@ -326,7 +283,7 @@ sub color {
 	 }  
       }
       	 
-      my $ref_key = substr( $flux->reference_waveband->natural, 0, 1 );
+      my $ref_key = $flux->reference_waveband()->natural();
       if( $ref_key eq $upper_key ) {
         
 	my $num;
@@ -418,23 +375,20 @@ sub pushfluxes {
 
   foreach my $arg ( @_ ) {
     if( UNIVERSAL::isa( $arg, "Astro::Flux" ) ) {
-      my $key = substr( $arg->waveband->natural, 0, 1 );
-     push @{${$self->{FLUXES}}{$key}}, $arg;
+      #my $key = substr( $arg->waveband->natural, 0, 1 );
+      my $key = $arg->waveband()->natural();
+      push @{${$self->{FLUXES}}{$key}}, $arg;
+      push @{$self->{FLUX}}, $arg->waveband();
     } elsif( UNIVERSAL::isa( $arg, "Astro::FluxColor" ) ) {
 
       # Create an Misc::Quality object saying that these are derived
       # magnitudes.
       my $quality = new Misc::Quality( 'derived' => 1 );
-        
-      my $num;
-      if ( defined $arg->error('mag') ) {
-         $num = new Number::Uncertainty ( Value => $arg->quantity('mag'),
-        				  Error => $arg->error('mag') )
-      } else {
-         $num = new Number::Uncertainty ( Value => $arg->quantity('mag') );
-      }  
-	
+
       # Create two flux objects, one for the lower and one for the upper.
+      my $num = new Number::Uncertainty( Value => $arg->quantity,
+                                         Error => $arg->error );			     
+	
       my ( $lower_flux, $upper_flux );					 
       if ( defined $arg->datetime() ) {
          $lower_flux = new Astro::Flux( $num , 'mag', $arg->lower,
@@ -453,9 +407,15 @@ sub pushfluxes {
                                         quality => $quality,
                                         reference_waveband => $arg->lower );      
       }
-
-      push @{${$self->{FLUXES}}->{substr( $lower_flux->waveband->natural, 0, 1 )}}, $lower_flux;
-      push @{${$self->{FLUXES}}->{substr( $upper_flux->waveband->natural, 0, 1 )}}, $upper_flux;
+      #push @{${$self->{FLUXES}}->{substr( $lower_flux->waveband->natural, 0, 1 )}}, $lower_flux;
+      #push @{${$self->{FLUXES}}->{substr( $upper_flux->waveband->natural, 0, 1 )}}, $upper_flux;
+      my $lower_key = $lower_flux->waveband->natural;
+      my $upper_key = $upper_flux->waveband->natural;
+      push @{${$self->{FLUXES}}{$lower_key}}, $lower_flux;
+      push @{${$self->{FLUXES}}{$upper_key}}, $upper_flux;
+           
+      my $color = $arg->upper() . "-" . $arg->lower();
+      push @{$self->{COLOR}}, $color;
 
     }
   }
@@ -466,18 +426,52 @@ sub pushfluxes {
 
 =item B<allfluxes>
 
-Returns an hash of all the C<Astro::Flux> objects contained in the
+Returns an array of all the C<Astro::Flux> objects contained in the
 C<Astro::Fluxes> object,
 
-  %fluxes = $fluxes->allfluxes();
+  @fluxes_not_dervied = $fluxes->allfluxes();
+  @fluxes_including_dervied = $fluxes->allfluxes( 'derived' );
+  
+by default this will not return the derived fluxes, however the method
+takes an optional arguement of 'derived', in which case it will do.
 
 =cut
 
 sub allfluxes {
   my $self = shift;
-   
-  return %{$self->{FLUXES}};
-
+  
+  my $flag;
+  if ( @_ ) {
+     my $arg = shift;
+     if( $arg eq 'derived' ) {
+        $flag = 1;
+     }	
+  }
+     
+  my %fluxes = %{$self->{FLUXES}};
+  
+  my @allfluxes;  
+  foreach my $key ( keys %fluxes ) {
+      #print "\n KEY = $key \n";
+      my $value = $fluxes{$key};
+      
+      foreach my $i ( 0 ... $#{$value} ) {
+ 	 my $flux = ${$value}[$i];
+     
+         # push derived fluxes only if we were asked to...
+         my $quality = $flux->quality();
+	 my $derived = $quality->query('derived') if defined $quality;
+	 #print "  $i, $derived\n";
+         if ( defined $derived ) {
+	    push @allfluxes, $flux if defined $flag;
+	 } else {
+	    push @allfluxes, $flux;	
+	 }
+	 $quality = undef;
+	 $derived = undef;     
+      }
+  }
+  return @allfluxes;     
 }
 
 =item B<fluxesbywaveband>
@@ -508,30 +502,8 @@ sub fluxesbywaveband {
   }
 
   # The key is the first character in the waveband.
-  my $key = substr( $waveband->natural, 0, 1 );
+  my $key = $waveband->natural();
   return @{${$self->{FLUXES}}{$key}};
-}
-
-
-=item B<whatwavebands>
-
-Returns an array of the wavebands contained in the object
-
-  @wavebands = $fluxes->whatwavebands( );
-
-=cut
-
-sub whatwavebands {
-  my $self = shift;
-  my %args = @_;
-
-  my $result;
-
-  my @wavebands;
-  foreach my $key ( sort keys %{$self->{FLUXES}} ) {
-     push @wavebands, $key;
-  }   
-  return @wavebands;
 }
 
 
@@ -548,17 +520,32 @@ sub original_colors {
   return @{$self->{COLOR}};
 }
 
-=item B<original_filters>
+=item B<original_wavebands>
 
 Returns an array of the original (not derived) filters contained in the object
 
-  @filters = $fluxes->original_filters( );
+  @wavebands = $fluxes->original_wavebands( );
+  @filters = $fluxes->original_wavebands( 'filters' );
+  
+optional arguement 'filters' returns an actual filter list rather than a list
+of C<Astro::WaveBand> objects.
 
 =cut
 
-sub original_filters {
+sub original_wavebands {
   my $self = shift;
-  return @{$self->{FLUX}};
+  
+  return @{$self->{FLUX}} unless @_;
+  
+  my $arg = shift;
+  return undef unless lc($arg) eq 'filters';
+  
+  my @filters;
+  foreach my $band ( @{$self->{FLUX}} ) {
+     push @filters, $band->filter();
+  }   
+  return @filters;   
+  
 }
 
 =item B<merge>
@@ -575,39 +562,42 @@ sub merge {
   
   croak "Astro::Fluxes::merge() - Not an Astro::Fluxes object\n"
                       unless UNIVERSAL::isa( $other, "Astro::Fluxes" );
+
+  my @fluxes = $other->allfluxes( 'derived' );
+  $self->pushfluxes( @fluxes );
   
-  my %fluxes = $other->allfluxes();
-  my @filters = $other->original_filters();
-  my @colours = $other->original_colors();
-  foreach my $key ( keys %fluxes ) {
-      my $value = $fluxes{$key};
-      foreach my $i ( 0 ... $#{$value} ) {
-        #use Data::Dumper; print "Item $key $i\n" . Dumper ${$value}[$i] . "\n\n\n";
-        push @{${$self->{FLUXES}}{$key}}, ${$value}[$i];
-	foreach my $i ( 0 ... $#colours ) {
-	   my $flag = 0;
-	   foreach my $j ( 0 ... $#{$self->{COLOR}} ) {
-	      if ( ${$self->{COLOR}}[$j] eq $colours[$i] ) {
-	         $flag = 1;
-		 last;
-	      }	 
-	   }
-	   push @{$self->{COLOR}}, $colours[$i] if $flag != 1;    
-	}
-	foreach my $i ( 0 ... $#filters ) {
-	   my $flag = 0;
-	   foreach my $j ( 0 ... $#{$self->{FLUX}} ) {
-	      if ( ${$self->{FLUX}}[$j] eq $filters[$i] ) {
-	         $flag = 1;
-		 last;
-	      }	
-	   }
-	   push @{$self->{FLUX}}, $filters[$i] if $flag != 1;  	
-	}
-      }
-  }
-    
-  return %{$self};
+#  my %fluxes = $other->allfluxes();
+#  my @filters = $other->original_filters();
+#  my @colours = $other->original_colors();
+#  foreach my $key ( keys %fluxes ) {
+#      my $value = $fluxes{$key};
+#      foreach my $i ( 0 ... $#{$value} ) {
+#        #use Data::Dumper; print "Item $key $i\n" . Dumper ${$value}[$i] . "\n\n\n";
+#        push @{${$self->{FLUXES}}{$key}}, ${$value}[$i];
+#	foreach my $i ( 0 ... $#colours ) {
+#	   my $flag = 0;
+#	   foreach my $j ( 0 ... $#{$self->{COLOR}} ) {
+#	      if ( ${$self->{COLOR}}[$j] eq $colours[$i] ) {
+#	         $flag = 1;
+#		 last;
+#	      }	 
+#	   }
+#	   push @{$self->{COLOR}}, $colours[$i] if $flag != 1;    
+#	}
+#	foreach my $i ( 0 ... $#filters ) {
+#	   my $flag = 0;
+#	   foreach my $j ( 0 ... $#{$self->{FLUX}} ) {
+#	      if ( ${$self->{FLUX}}[$j] eq $filters[$i] ) {
+#	         $flag = 1;
+#		 last;
+#	      }	
+#	   }
+#	   push @{$self->{FLUX}}, $filters[$i] if $flag != 1;  	
+#	}
+#      }
+#  }
+#    
+#  return %{$self};
 
 }
 
