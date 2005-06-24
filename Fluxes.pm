@@ -88,9 +88,14 @@ Optional arguments are:
   derived - Whether or not to return fluxes that have been derived
     from colors. Defaults to false, so that derived fluxes will not
     be returned.
-    
+
   datetime - whether we should return a flux from a specified object,
-    should be passed as a C<DateTime> object.  
+    should be passed as a C<DateTime> object.
+
+  type - which type of flux to return. If this is not given this method
+    will default to 'mag'. If you supply a type that is not
+    'mag' or 'magnitudes' and are attempting to return a derived flux,
+    this method will return undef.
 
 This method returns an C<Astro::Flux> object.
 
@@ -120,7 +125,12 @@ sub flux {
         croak( "Astro::Fluxes::flux() - Time must be a DateTime object\n" );
      }
   }
-  
+
+  my $type = $args{'type'};
+  if( ! defined( $args{'type'} ) ) {
+    $type = 'mag';
+  }
+
   # The key is the first character in the waveband.
   my $key = $waveband->natural;
 
@@ -128,14 +138,18 @@ sub flux {
   foreach my $flux ( @{${$self->{FLUXES}}{$key}} ) {
     if( ! defined( $flux->reference_waveband ) ) {
       if( defined $datetime && defined $flux->datetime ) {
-         if( ($datetime <=> $flux->datetime()) == 0 ) {
+        if( ($datetime <=> $flux->datetime()) == 0 ) {
+          if( lc( $type ) eq lc( $flux->type ) ) {
             $result = $flux;
-	    last;
-	 } 
+            last;
+          }
+        }
       } else {
-         $result = $flux;
-         last;
-      }	 
+        if( lc( $type ) eq lc( $flux->type ) ) {
+          $result = $flux;
+          last;
+        }
+      }
     }
   }
 
@@ -144,10 +158,13 @@ sub flux {
   # Return right here with undef if $derived is false.
   return if ( ! $derived );
 
+  # Return right here if we are not looking for a 'mag' or 'magnitude'.
+  return if ( $type !~ /^mag/i );
+
   # Get the reference waveband for the current flux such that the
   # reference waveband doesn't have only a pointer back to the current
   # one.
-    
+
   my ($ref_flux, $ref_datetime);
   my $running_total = undef;
   my $running_error = undef;
