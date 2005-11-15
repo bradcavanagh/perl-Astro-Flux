@@ -425,7 +425,7 @@ sub pushfluxes {
       my $upper_key = $upper_flux->waveband->natural;
       push @{${$self->{FLUXES}}{$lower_key}}, $lower_flux;
       push @{${$self->{FLUXES}}{$upper_key}}, $upper_flux;
-           
+
       my $color = $arg->upper() . "-" . $arg->lower();
       push @{$self->{COLOR}}, $color;
 
@@ -571,46 +571,12 @@ Merges another C<Astro::Fluxes> object with this object
 sub merge {
   my $self = shift;
   my $other = shift;
-  
+
   croak "Astro::Fluxes::merge() - Not an Astro::Fluxes object\n"
                       unless UNIVERSAL::isa( $other, "Astro::Fluxes" );
 
   my @fluxes = $other->allfluxes( 'derived' );
   $self->pushfluxes( @fluxes );
-  
-#  my %fluxes = $other->allfluxes();
-#  my @filters = $other->original_filters();
-#  my @colours = $other->original_colors();
-#  foreach my $key ( keys %fluxes ) {
-#      my $value = $fluxes{$key};
-#      foreach my $i ( 0 ... $#{$value} ) {
-#        #use Data::Dumper; print "Item $key $i\n" . Dumper ${$value}[$i] . "\n\n\n";
-#        push @{${$self->{FLUXES}}{$key}}, ${$value}[$i];
-#	foreach my $i ( 0 ... $#colours ) {
-#	   my $flag = 0;
-#	   foreach my $j ( 0 ... $#{$self->{COLOR}} ) {
-#	      if ( ${$self->{COLOR}}[$j] eq $colours[$i] ) {
-#	         $flag = 1;
-#		 last;
-#	      }	 
-#	   }
-#	   push @{$self->{COLOR}}, $colours[$i] if $flag != 1;    
-#	}
-#	foreach my $i ( 0 ... $#filters ) {
-#	   my $flag = 0;
-#	   foreach my $j ( 0 ... $#{$self->{FLUX}} ) {
-#	      if ( ${$self->{FLUX}}[$j] eq $filters[$i] ) {
-#	         $flag = 1;
-#		 last;
-#	      }	
-#	   }
-#	   push @{$self->{FLUX}}, $filters[$i] if $flag != 1;  	
-#	}
-#      }
-#  }
-#    
-#  return %{$self};
-
 }
 
 
