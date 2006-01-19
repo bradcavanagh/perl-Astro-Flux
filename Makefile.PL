@@ -9,7 +9,10 @@ WriteMakefile(
         'NAME' => 'Astro::Flux',
         'VERSION_FROM' => 'Flux.pm',
         'PREREQ_PM' => {
-			'Astro::WaveBand' => 0,
+                        'Astro::WaveBand' => 0,
+                        'DateTime' => 0,
+                        'Misc::Quality' => 0,
+                        'Number::Uncertainty' => 0,
 		       },
 	($] >= 5.005 ?    ## Add these new keywords supported since 5.005
 	 (ABSTRACT_FROM => 'Flux.pm',
