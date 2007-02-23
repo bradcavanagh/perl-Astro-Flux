@@ -11,3 +11,4 @@ t/20_fluxes.t
 t/25_allfluxes.t                                                    
 t/30_merge.t
 t/35_datestamp.t
+META.yml                                 Module meta-data (added by MakeMaker)
